@@ -3,11 +3,6 @@ from pydantic import BaseModel
 from typing import List
 import smtplib
 from fastapi.responses import JSONResponse
-import os
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 app = FastAPI()
 
@@ -17,35 +12,16 @@ receiver_emails = [
     "harichselvam.ds.ai@gmail.com"
 ]
 
-# Email configuration from environment variables
-sender_email = os.getenv("SENDER_EMAIL")
-sender_password = os.getenv("SENDER_PASSWORD")
+# Email configuration
+sender_email = "screamdetection@gmail.com"  # Replace with your sender email
+sender_password = "aobh rdgp iday bpwg"  # Replace with your email password (consider using an App Password if using Gmail)
 
 
-def send_email(subject: str, message: str):
-    """Function to send email to all receiver emails"""
-    try:
-        with smtplib.SMTP('smtp.gmail.com', 587) as server:
-            server.starttls()  # Start TLS for security
-            server.login(sender_email, sender_password)
-            full_message = f"Subject: {subject}\n\n{message}"
-
-            # Send email to all receiver emails
-            for receiver_email in receiver_emails:
-                server.sendmail(sender_email, receiver_email, full_message)
-
-        return "Email sent successfully!"
-    except Exception as e:
-        return f"An error occurred: {e}"
-
-
-# Pydantic model for receiver email
 class Receiver(BaseModel):
     email: str
 
 
-# Pydantic model for CancerSponsorRequest
-class CancerSponsorRequest(BaseModel):
+class FormData(BaseModel):
     name: str
     gender: str
     cancerType: str
@@ -60,66 +36,47 @@ class CancerSponsorRequest(BaseModel):
     dob: str
 
 
+def send_email(subject: str, message: str):
+    """Function to send email to all receiver emails"""
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()  # Start TLS for security
+            server.login(sender_email, sender_password)
+            full_message = f"Subject: {subject}\n\n{message}"
+            
+            # Send email to all receiver emails
+            for receiver_email in receiver_emails:
+                server.sendmail(sender_email, receiver_email, full_message)
+        
+        return "Email sent successfully!"
+    except Exception as e:
+        return f"An error occurred: {e}"
+
+
 @app.post("/submit_form/")
-async def submit_form(request: CancerSponsorRequest):
+async def submit_form(form_data: FormData):
     """Endpoint to handle form submission and send email"""
-
-    # Check for missing fields
-    missingFields = []
-    if not request.name:
-        missingFields.append("Name")
-    if not request.gender:
-        missingFields.append("Gender")
-    if not request.cancerType:
-        missingFields.append("Cancer Type")
-    if not request.age:
-        missingFields.append("Age")
-    if not request.occupation:
-        missingFields.append("Occupation")
-    if not request.income:
-        missingFields.append("Income")
-    if not request.panCardNumber:
-        missingFields.append("PAN Card Number")
-    if not request.currentTreatment:
-        missingFields.append("Current Cancer Treatment")
-    if not request.costNeeded:
-        missingFields.append("Cost Needed")
-    if not request.aadhaarNumber:
-        missingFields.append("Aadhaar Number")
-    if not request.address:
-        missingFields.append("Address")
-    if not request.dob:
-        missingFields.append("Date of Birth")
-
-    # If there are missing fields, show an alert message
-    if missingFields:
-        return JSONResponse(
-            status_code=400,
-            content={"message": f"Please fill in the following fields: {', '.join(missingFields)}"}
-        )
-
-    # Create the message for the email
-    message = (
-        f"Name: {request.name}\n"
-        f"Gender: {request.gender}\n"
-        f"Cancer Type: {request.cancerType}\n"
-        f"Age: {request.age}\n"
-        f"Occupation: {request.occupation}\n"
-        f"Income: {request.income}\n"
-        f"PAN Card Number: {request.panCardNumber}\n"
-        f"Current Treatment: {request.currentTreatment}\n"
-        f"Cost Needed: {request.costNeeded}\n"
-        f"Aadhaar Number: {request.aadhaarNumber}\n"
-        f"Address: {request.address}\n"
-        f"Date of Birth: {request.dob}\n"
-    )
-
-    # Send email with subject "Cancer Sponsor Request"
-    result = send_email("Cancer Sponsor Request", message)
+    # You can format the message however you want, here's a sample.
+    message = f"""
+    Name: {form_data.name}
+    Gender: {form_data.gender}
+    Cancer Type: {form_data.cancerType}
+    Age: {form_data.age}
+    Occupation: {form_data.occupation}
+    Income: {form_data.income}
+    PAN Card Number: {form_data.panCardNumber}
+    Current Treatment: {form_data.currentTreatment}
+    Cost Needed: {form_data.costNeeded}
+    Aadhaar Number: {form_data.aadhaarNumber}
+    Address: {form_data.address}
+    Date of Birth: {form_data.dob}
+    """
+    
+    result = send_email("New Form Submission", message)
     if "successfully" in result:
-        return {"status": "success", "message": "Application submitted successfully and email sent."}
+        return {"status": "success", "message": result}
     else:
-        raise HTTPException(status_code=500, detail=f"Error sending email: {result}")
+        raise HTTPException(status_code=500, detail=result)
 
 
 @app.post("/addmin/")
@@ -150,3 +107,8 @@ async def get_receivers():
     """Endpoint to get the list of receiver emails"""
     return {"receiver_emails": receiver_emails}
 
+
+# # Running the app
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="0.0.0.0", port=8000)
