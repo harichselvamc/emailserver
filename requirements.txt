@@ -1,4 +1,5 @@
 python-multipart
+python-dotenv
 fastapi 
 uvicorn 
 secure-smtplib
