@@ -9,7 +9,10 @@ app = FastAPI()
 # Initialize the list of receiver emails
 receiver_emails = [
     "harichselvamc@gmail.com",
-    "harichselvam.ds.ai@gmail.com"
+    "harichselvam.ds.ai@gmail.com",
+ "divyasri346.bme@gmail.com",
+"priyanka.668.bme@gmail.com"
+"rizwanabegum.1523bme@gmail.com"
 ]
 
 # Email configuration
@@ -72,7 +75,7 @@ async def submit_form(form_data: FormData):
     Date of Birth: {form_data.dob}
     """
     
-    result = send_email("New Form Submission", message)
+    result = send_email("New Form Submission for Cancer Support", message)
     if "successfully" in result:
         return {"status": "success", "message": result}
     else:
