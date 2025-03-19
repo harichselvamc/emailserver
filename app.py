@@ -1,0 +1,83 @@
+from fastapi import FastAPI, Form, HTTPException
+from pydantic import BaseModel
+from typing import List
+import smtplib
+from fastapi.responses import JSONResponse
+
+app = FastAPI()
+
+# Initialize the list of receiver emails
+receiver_emails = [
+    "harichselvamc@gmail.com",
+    "harichselvam.ds.ai@gmail.com"
+]
+
+# Email configuration
+sender_email = "screamdetection@gmail.com"  # Replace with your sender email
+sender_password = "aobh rdgp iday bpwg"  # Replace with your email password (consider using an App Password if using Gmail)
+
+
+class Receiver(BaseModel):
+    email: str
+
+
+def send_email(subject: str, message: str):
+    """Function to send email to all receiver emails"""
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()  # Start TLS for security
+            server.login(sender_email, sender_password)
+            full_message = f"Subject: {subject}\n\n{message}"
+            
+            # Send email to all receiver emails
+            for receiver_email in receiver_emails:
+                server.sendmail(sender_email, receiver_email, full_message)
+        
+        return "Email sent successfully!"
+    except Exception as e:
+        return f"An error occurred: {e}"
+
+
+@app.post("/submit_form/")
+async def submit_form(subject: str = Form(...), message: str = Form(...)):
+    """Endpoint to handle form submission and send email"""
+    result = send_email(subject, message)
+    if "successfully" in result:
+        return {"status": "success", "message": result}
+    else:
+        raise HTTPException(status_code=500, detail=result)
+
+
+@app.post("/addmin/")
+async def add_or_edit_receiver(receiver: Receiver, operation: str = Form(...)):
+    """Endpoint to add or edit receiver email addresses"""
+    global receiver_emails
+    if operation == "add":
+        if receiver.email not in receiver_emails:
+            receiver_emails.append(receiver.email)
+            return {"status": "success", "message": f"Email {receiver.email} added to the receiver list."}
+        else:
+            raise HTTPException(status_code=400, detail="Email is already in the list.")
+    elif operation == "edit":
+        old_email = receiver.email
+        new_email = Form(..., alias="new_email")
+        if old_email in receiver_emails:
+            receiver_emails.remove(old_email)
+            receiver_emails.append(new_email)
+            return {"status": "success", "message": f"Email {old_email} edited to {new_email}."}
+        else:
+            raise HTTPException(status_code=404, detail="Email not found in the list.")
+    else:
+        raise HTTPException(status_code=400, detail="Invalid operation. Use 'add' or 'edit'.")
+
+
+@app.get("/get_receivers/")
+async def get_receivers():
+    """Endpoint to get the list of receiver emails"""
+    return {"receiver_emails": receiver_emails}
+
+
+# # Running the app
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="0.0.0.0", port=8000)
