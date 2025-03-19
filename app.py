@@ -11,7 +11,7 @@ receiver_emails = [
     "harichselvamc@gmail.com",
     "harichselvam.ds.ai@gmail.com",
  "divyasri346.bme@gmail.com",
-"priyanka.668.bme@gmail.com"
+"priyanka.668.bme@gmail.com",
 "rizwanabegum.1523bme@gmail.com"
 ]
 
