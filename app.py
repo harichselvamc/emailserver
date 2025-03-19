@@ -78,9 +78,8 @@ async def submit_form(form_data: FormData):
     else:
         raise HTTPException(status_code=500, detail=result)
 
-
 @app.post("/addmin/")
-async def add_or_edit_receiver(receiver: Receiver, operation: str = Form(...)):
+async def add_or_edit_receiver(receiver: Receiver, new_email: str = Form(None), operation: str = Form(...)):
     """Endpoint to add or edit receiver email addresses"""
     global receiver_emails
     if operation == "add":
@@ -91,11 +90,13 @@ async def add_or_edit_receiver(receiver: Receiver, operation: str = Form(...)):
             raise HTTPException(status_code=400, detail="Email is already in the list.")
     elif operation == "edit":
         old_email = receiver.email
-        new_email = Form(..., alias="new_email")
         if old_email in receiver_emails:
-            receiver_emails.remove(old_email)
-            receiver_emails.append(new_email)
-            return {"status": "success", "message": f"Email {old_email} edited to {new_email}."}
+            if new_email:
+                receiver_emails.remove(old_email)
+                receiver_emails.append(new_email)
+                return {"status": "success", "message": f"Email {old_email} edited to {new_email}."}
+            else:
+                raise HTTPException(status_code=400, detail="New email is required for editing.")
         else:
             raise HTTPException(status_code=404, detail="Email not found in the list.")
     else:
